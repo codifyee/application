@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if is_create %}Create{% else %}Edit{% endif %} Project | Task Management System{% endblock %}
+
+{% block page_title %}{% if is_create %}Create{% else %}Edit{% endif %} Project{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{% url 'project_list' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Back to Projects
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">{% if is_create %}Create{% else %}Edit{% endif %} Project</h6>
+            </div>
+            <div class="card-body">
+                <form method="post" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="id_name" class="form-label">Project Name <span class="text-danger">*</span></label>
+                        <input type="text" name="name" id="id_name" class="form-control {% if form.name.errors %}is-invalid{% endif %}" 
+                            value="{{ form.name.value|default:'' }}" required>
+                        {% if form.name.errors %}
+                        <div class="invalid-feedback">
+                            {{ form.name.errors.0 }}
+                        </div>
+                        {% endif %}
+                        <div class="form-text">Enter a descriptive name for your project.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_description" class="form-label">Description</label>
+                        <textarea name="description" id="id_description" rows="4" 
+                            class="form-control {% if form.description.errors %}is-invalid{% endif %}">{{ form.description.value|default:'' }}</textarea>
+                        {% if form.description.errors %}
+                        <div class="invalid-feedback">
+                            {{ form.description.errors.0 }}
+                        </div>
+                        {% endif %}
+                        <div class="form-text">Provide details about the project's goals, scope, and objectives.</div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'project_list' %}" class="btn btn-secondary me-md-2">Cancel</a>
+                        <button type="submit" class="btn btn-primary">
+                            {% if is_create %}Create Project{% else %}Save Changes{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Project Guidelines</h6>
+            </div>
+            <div class="card-body">
+                <h5 class="fw-bold mb-3">Tips for Effective Projects</h5>
+                <ul class="mb-4">
+                    <li>Use a clear, descriptive name for your project</li>
+                    <li>Provide a detailed description of project goals</li>
+                    <li>Break down complex projects into manageable tasks</li>
+                    <li>Assign tasks to team members based on expertise</li>
+                    <li>Set realistic deadlines for project completion</li>
+                </ul>
+                
+                <h5 class="fw-bold mb-3">Project Management Best Practices</h5>
+                <div class="mb-2">
+                    <span class="badge bg-primary me-2">Planning</span>
+                    Define clear objectives and scope
+                </div>
+                <div class="mb-2">
+                    <span class="badge bg-success me-2">Organization</span>
+                    Structure tasks and assign responsibilities
+                </div>
+                <div class="mb-2">
+                    <span class="badge bg-info me-2">Tracking</span>
+                    Monitor progress and adjust as needed
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Form validation script
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('.needs-validation');
+        
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            
+            form.classList.add('was-validated');
+        }, false);
+    });
+</script>
+{% endblock %} 

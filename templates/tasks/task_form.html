@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if is_create %}Create Task{% else %}Edit Task{% endif %} - Task Management System{% endblock %}
+
+{% block page_title %}{% if is_create %}Create Task{% else %}Edit Task{% endif %}{% endblock %}
+
+{% block page_actions %}
+{% if not is_create %}
+<a href="{% url 'task_detail' task.id %}" class="btn btn-sm btn-secondary">
+    <i class="fas fa-arrow-left"></i> Back to Task
+</a>
+{% else %}
+<a href="{% url 'task_list' %}" class="btn btn-sm btn-secondary">
+    <i class="fas fa-arrow-left"></i> Back to List
+</a>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    {% if is_create %}Create a New Task{% else %}Edit Task{% endif %}
+                </h6>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger" role="alert">
+                        {% for error in form.non_field_errors %}
+                        {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.title.id_for_label }}" class="form-label">Title</label>
+                        {{ form.title.errors }}
+                        {{ form.title }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
+                        {{ form.description.errors }}
+                        {{ form.description }}
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.status.id_for_label }}" class="form-label">Status</label>
+                            {{ form.status.errors }}
+                            {{ form.status }}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="{{ form.assigned_to.id_for_label }}" class="form-label">Assigned To</label>
+                            {{ form.assigned_to.errors }}
+                            {{ form.assigned_to }}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.deadline.id_for_label }}" class="form-label">Deadline (optional)</label>
+                        {{ form.deadline.errors }}
+                        {{ form.deadline }}
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> {% if is_create %}Create Task{% else %}Save Changes{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add Bootstrap classes to form elements
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add classes to form inputs
+        const formControls = document.querySelectorAll('input, textarea, select');
+        formControls.forEach(element => {
+            if (!element.classList.contains('form-control') && !element.classList.contains('form-select')) {
+                if (element.tagName.toLowerCase() === 'select') {
+                    element.classList.add('form-select');
+                } else {
+                    element.classList.add('form-control');
+                }
+            }
+        });
+        
+        // Add rows to textarea
+        const textareas = document.querySelectorAll('textarea');
+        textareas.forEach(textarea => {
+            textarea.setAttribute('rows', '5');
+        });
+    });
+</script>
+{% endblock %} 

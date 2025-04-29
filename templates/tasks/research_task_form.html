@@ -1,0 +1,647 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if is_create %}Create{% else %}Edit{% endif %} Research Task | Task Management System{% endblock %}
+
+{% block page_title %}{% if is_create %}Create{% else %}Edit{% endif %} Research Task{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    {% if project %}
+    <a href="{% url 'project_detail' project.id %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Back to Project
+    </a>
+    {% else %}
+    <a href="{% url 'research_list' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Back to Research Tasks
+    </a>
+    {% endif %}
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">{% if is_create %}Create{% else %}Edit{% endif %} Research Task</h6>
+            </div>
+            <div class="card-body">
+                <form method="post" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    <input type="hidden" name="section_data" id="section_data_input" value="{}">
+                    
+                    <div class="mb-3">
+                        <label for="id_title" class="form-label">Title <span class="text-danger">*</span></label>
+                        <input type="text" name="title" id="id_title" class="form-control {% if form.title.errors %}is-invalid{% endif %}" 
+                            value="{{ form.title.value|default:'' }}" required>
+                        {% if form.title.errors %}
+                        <div class="invalid-feedback">
+                            {{ form.title.errors.0 }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_description" class="form-label">Description</label>
+                        <textarea name="description" id="id_description" rows="4" 
+                            class="form-control {% if form.description.errors %}is-invalid{% endif %}">{{ form.description.value|default:'' }}</textarea>
+                        {% if form.description.errors %}
+                        <div class="invalid-feedback">
+                            {{ form.description.errors.0 }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    {% if not project %}
+                    <div class="mb-3">
+                        <label for="id_project" class="form-label">Project <span class="text-danger">*</span></label>
+                        <select name="project" id="id_project" class="form-select {% if form.project.errors %}is-invalid{% endif %}" required>
+                            <option value="" {% if not form.project.value %}selected{% endif %}>Select Project</option>
+                            {% for project in projects %}
+                            <option value="{{ project.id }}" {% if form.project.value|stringformat:'s' == project.id|stringformat:'s' %}selected{% endif %}>
+                                {{ project.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        {% if form.project.errors %}
+                        <div class="invalid-feedback">
+                            {{ form.project.errors.0 }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <div class="mb-3">
+                        <label for="id_project" class="form-label">Project</label>
+                        <input type="text" class="form-control" value="{{ project.name }}" readonly>
+                        <input type="hidden" name="project" value="{{ project.id }}">
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <label for="id_assigned_to" class="form-label">Assigned To</label>
+                        <select name="assigned_to" id="id_assigned_to" class="form-select {% if form.assigned_to.errors %}is-invalid{% endif %}">
+                            <option value="" {% if not form.assigned_to.value %}selected{% endif %}>Select User</option>
+                            {% for user in users %}
+                            <option value="{{ user.id }}" {% if form.assigned_to.value|stringformat:'s' == user.id|stringformat:'s' %}selected{% endif %}>
+                                {{ user.username }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        {% if form.assigned_to.errors %}
+                        <div class="invalid-feedback">
+                            {{ form.assigned_to.errors.0 }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_reference_website" class="form-label">Reference Website</label>
+                        <input type="url" name="reference_website" id="id_reference_website" class="form-control {% if form.reference_website.errors %}is-invalid{% endif %}" 
+                            value="{{ form.reference_website.value|default:'' }}">
+                        {% if form.reference_website.errors %}
+                        <div class="invalid-feedback">
+                            {{ form.reference_website.errors.0 }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_issues" class="form-label">Issues</label>
+                        <textarea name="issues" id="id_issues" rows="3" 
+                            class="form-control {% if form.issues.errors %}is-invalid{% endif %}">{{ form.issues.value|default:'' }}</textarea>
+                        {% if form.issues.errors %}
+                        <div class="invalid-feedback">
+                            {{ form.issues.errors.0 }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_status" class="form-label">Status</label>
+                        <select name="status" id="id_status" class="form-select {% if form.status.errors %}is-invalid{% endif %}">
+                            {% for value, label in form.fields.status.choices %}
+                            <option value="{{ value }}" {% if form.status.value == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                        {% if form.status.errors %}
+                        <div class="invalid-feedback">
+                            {{ form.status.errors.0 }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Excel-like Sheet for Sections -->
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                            <h6 class="m-0 font-weight-bold text-primary">Research Sections</h6>
+                            <button type="button" class="btn btn-sm btn-primary" id="addSectionBtn">
+                                <i class="fas fa-plus me-2"></i>Add Section
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover" id="researchSheet">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th style="width: 30px;">#</th>
+                                            <th style="width: 200px;">Section</th>
+                                            <th>Notes</th>
+                                            <th>References</th>
+                                            <th style="width: 120px;">Status</th>
+                                            <th style="width: 80px;">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="sectionTableBody">
+                                        {% if form.instance.section_data %}
+                                            {% for section_id, section in form.instance.section_data.items %}
+                                            <tr data-section-id="{{ section_id }}" class="section-row">
+                                                <td class="text-center section-number"></td>
+                                                <td>
+                                                    <input type="text" class="form-control section-name" data-section="{{ section_id }}" 
+                                                        value="{{ section.name }}" data-original-id="{{ section_id }}">
+                                                </td>
+                                                <td>
+                                                    <textarea class="form-control section-notes" data-section="{{ section_id }}" rows="2">{{ section.notes }}</textarea>
+                                                </td>
+                                                <td>
+                                                    <textarea class="form-control section-references" data-section="{{ section_id }}" rows="2" 
+                                                        placeholder="Add references (one per line)...">{{ section.references }}</textarea>
+                                                </td>
+                                                <td>
+                                                    <select class="form-select section-status" data-section="{{ section_id }}">
+                                                        <option value="not_started" {% if section.status == 'not_started' %}selected{% endif %}>Not Started</option>
+                                                        <option value="in_progress" {% if section.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                                                        <option value="completed" {% if section.status == 'completed' %}selected{% endif %}>Completed</option>
+                                                    </select>
+                                                </td>
+                                                <td>
+                                                    <button type="button" class="btn btn-sm btn-danger delete-section" data-section="{{ section_id }}" title="Delete Section">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        {% else %}
+                                            <tr data-section-id="section_1" class="section-row">
+                                                <td class="text-center section-number">1</td>
+                                                <td>
+                                                    <input type="text" class="form-control section-name" data-section="section_1" placeholder="Section name...">
+                                                </td>
+                                                <td>
+                                                    <textarea class="form-control section-notes" data-section="section_1" rows="2"></textarea>
+                                                </td>
+                                                <td>
+                                                    <textarea class="form-control section-references" data-section="section_1" rows="2" 
+                                                        placeholder="Add references (one per line)..."></textarea>
+                                                </td>
+                                                <td>
+                                                    <select class="form-select section-status" data-section="section_1">
+                                                        <option value="not_started">Not Started</option>
+                                                        <option value="in_progress">In Progress</option>
+                                                        <option value="completed">Completed</option>
+                                                    </select>
+                                                </td>
+                                                <td>
+                                                    <button type="button" class="btn btn-sm btn-danger delete-section" data-section="section_1" title="Delete Section">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Buttons -->
+                    <div class="card shadow mb-4">
+                        <div class="card-body">
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                {% if project %}
+                                <a href="{% url 'project_detail' project.id %}" class="btn btn-secondary me-md-2">Cancel</a>
+                                {% else %}
+                                <a href="{% url 'research_list' %}" class="btn btn-secondary me-md-2">Cancel</a>
+                                {% endif %}
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>Save Research
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Research Guidelines</h6>
+            </div>
+            <div class="card-body">
+                <h5 class="fw-bold mb-3">Tips for Effective Research</h5>
+                <ul class="mb-4">
+                    <li>Be specific about what you want to research</li>
+                    <li>Break down complex research into smaller tasks</li>
+                    <li>Set clear objectives for the research</li>
+                    <li>Document findings as you progress</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .table th {
+        white-space: nowrap;
+        background-color: #f8f9fc;
+        font-weight: 600;
+    }
+    
+    .table td {
+        vertical-align: middle;
+    }
+    
+    .table-responsive {
+        overflow-x: auto;
+    }
+    
+    .section-notes, .section-references, .section-name {
+        font-size: 0.875rem;
+    }
+    
+    .section-status {
+        width: 120px;
+    }
+    
+    .delete-section {
+        padding: 0.25rem 0.5rem;
+    }
+</style>
+
+<script type="text/javascript">
+    // Initialize with empty object if no data exists
+    var initialData = '{% if form.instance.section_data %}{{ form.instance.section_data|escapejs }}{% else %}{}{% endif %}';
+    window.initialSectionData = JSON.parse(initialData);
+    console.log("Initial section data:", window.initialSectionData);
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const table = document.getElementById('researchSheet');
+    const tbody = document.getElementById('sectionTableBody');
+    const addSectionBtn = document.getElementById('addSectionBtn');
+    const form = document.querySelector('form');
+    const sectionDataInput = document.getElementById('section_data_input');
+    let sectionCounter = 1;
+    
+    // Initialize section data from existing data or create default
+    let initialData = {};
+    try {
+        const dataString = '{% if form.instance.section_data %}{{ form.instance.section_data|escapejs }}{% else %}{}{% endif %}';
+        initialData = JSON.parse(dataString);
+        console.log("Initial section data parsed:", initialData);
+        
+        // Debug: Output all section keys
+        console.log("Initial section keys:", Object.keys(initialData));
+    } catch (e) {
+        console.error("Error parsing initial data:", e);
+        initialData = {};
+    }
+    
+    // Calculate maximum section ID to ensure no duplicates or overwrites
+    if (Object.keys(initialData).length > 0) {
+        Object.keys(initialData).forEach(sectionId => {
+            const matches = sectionId.match(/section_(\d+)/);
+            if (matches && matches[1]) {
+                const num = parseInt(matches[1], 10);
+                if (!isNaN(num) && num >= sectionCounter) {
+                    sectionCounter = num + 1;
+                }
+            }
+        });
+        console.log("Next section ID will be:", sectionCounter);
+    }
+    
+    // Initialize with existing data or add default row
+    if (Object.keys(initialData).length > 0) {
+        console.log(`Loading ${Object.keys(initialData).length} existing sections`);
+        tbody.innerHTML = ''; // Clear existing rows
+        
+        // Sort section IDs numerically to maintain order
+        const sectionIds = Object.keys(initialData).sort((a, b) => {
+            const numA = parseInt(a.split('_')[1] || '0');
+            const numB = parseInt(b.split('_')[1] || '0');
+            return numA - numB;
+        });
+        
+        // Create rows for all sections
+        sectionIds.forEach(sectionId => {
+            const sectionData = initialData[sectionId];
+            tbody.appendChild(createSectionRow(sectionId, sectionData));
+            console.log(`Added row for section ${sectionId}: "${sectionData.name}"`);
+        });
+    } else if (tbody.children.length === 0) {
+        // Add a default row if none exists
+        console.log("Adding default section row");
+        const defaultSectionId = 'section_1';
+        tbody.appendChild(createSectionRow(defaultSectionId, {
+            name: '',
+            notes: '',
+            references: '',
+            status: 'not_started'
+        }));
+        sectionCounter = 2;
+    }
+    
+    // Set initial input value after initialization
+    updateSectionData();
+    
+    // Add section button handler - creates a new section with unique ID
+    addSectionBtn.addEventListener('click', function() {
+        // Get fresh count of current rows
+        const currentRows = document.querySelectorAll('#sectionTableBody tr.section-row');
+        console.log(`Adding new section (current count: ${currentRows.length})`);
+        
+        // Ensure next ID is unique
+        const newSectionId = 'section_' + sectionCounter++;
+        console.log(`Next section ID: ${newSectionId}`);
+        
+        // Create the new row with explicit ID
+        const newRow = createSectionRow(newSectionId);
+        tbody.appendChild(newRow);
+        
+        // Update section numbers
+        updateSectionNumbers();
+        
+        // Update section data to include the new row
+        const updatedData = updateSectionData();
+        
+        // Double-check new count
+        const updatedRows = document.querySelectorAll('#sectionTableBody tr.section-row');
+        console.log(`After adding: ${updatedRows.length} rows, ${Object.keys(updatedData).length} data items`);
+        
+        // Focus the new section's name field
+        setTimeout(() => {
+            const nameInput = newRow.querySelector('.section-name');
+            if (nameInput) {
+                nameInput.focus();
+            }
+        }, 50);
+    });
+    
+    // Delete section handler
+    table.addEventListener('click', function(e) {
+        const deleteButton = e.target.closest('.delete-section');
+        if (deleteButton) {
+            const row = deleteButton.closest('tr');
+            const sectionId = row.getAttribute('data-section-id') || 
+                             deleteButton.getAttribute('data-section') ||
+                             row.querySelector('.section-name')?.getAttribute('data-section');
+            
+            if (tbody.children.length > 1) {
+                if (confirm(`Are you sure you want to delete this section?`)) {
+                    console.log(`Removing section: ${sectionId}`);
+                    row.remove();
+                    updateSectionData();
+                }
+            } else {
+                alert('Cannot delete the last section. At least one section is required.');
+            }
+        }
+    });
+    
+    // Update data when section content changes
+    table.addEventListener('change', function(e) {
+        if (e.target.classList.contains('section-name') ||
+            e.target.classList.contains('section-notes') ||
+            e.target.classList.contains('section-references') ||
+            e.target.classList.contains('section-status')) {
+            updateSectionData();
+        }
+    });
+    
+    // Function to create a new section row
+    function createSectionRow(sectionId, sectionData = null) {
+        // Set default values if none provided
+        const defaultData = {
+            name: sectionData?.name || '',
+            notes: sectionData?.notes || '',
+            references: sectionData?.references || '',
+            status: sectionData?.status || 'not_started'
+        };
+        
+        const newRow = document.createElement('tr');
+        newRow.setAttribute('data-section-id', sectionId);
+        newRow.classList.add('section-row');
+        
+        // Create a complete row with all fields having the section ID
+        newRow.innerHTML = `
+            <td class="text-center section-number"></td>
+            <td>
+                <input type="text" class="form-control section-name" data-section="${sectionId}" 
+                    value="${defaultData.name}" placeholder="Section name..." data-original-id="${sectionId}">
+            </td>
+            <td>
+                <textarea class="form-control section-notes" data-section="${sectionId}" rows="2"
+                    placeholder="Enter section notes...">${defaultData.notes}</textarea>
+            </td>
+            <td>
+                <textarea class="form-control section-references" data-section="${sectionId}" 
+                    rows="2" placeholder="Add references (one per line)...">${defaultData.references}</textarea>
+            </td>
+            <td>
+                <select class="form-select section-status" data-section="${sectionId}" required>
+                    <option value="not_started" ${defaultData.status === 'not_started' ? 'selected' : ''}>Not Started</option>
+                    <option value="in_progress" ${defaultData.status === 'in_progress' ? 'selected' : ''}>In Progress</option>
+                    <option value="completed" ${defaultData.status === 'completed' ? 'selected' : ''}>Completed</option>
+                </select>
+            </td>
+            <td>
+                <button type="button" class="btn btn-sm btn-danger delete-section" data-section="${sectionId}" title="Delete Section">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        `;
+        
+        console.log(`Created new row with section ID: ${sectionId}`);
+        return newRow;
+    }
+
+    // Function to update section numbers to match their visual order
+    function updateSectionNumbers() {
+        const rows = document.querySelectorAll('#sectionTableBody tr.section-row');
+        rows.forEach((row, index) => {
+            const numberCell = row.querySelector('.section-number');
+            if (numberCell) {
+                numberCell.textContent = (index + 1).toString();
+            }
+        });
+    }
+
+    // Function to collect and update section data - rewritten for reliability
+    function updateSectionData() {
+        const sectionData = {};
+        
+        // Debug: Log each row in the table
+        const allRows = document.querySelectorAll('#sectionTableBody tr.section-row');
+        console.log(`Processing ${allRows.length} rows to collect section data`);
+        
+        // CRITICAL: Collect all visible section names first
+        const visibleSectionNames = [];
+        allRows.forEach((row, index) => {
+            const nameInput = row.querySelector('.section-name');
+            const name = nameInput ? nameInput.value.trim() : '';
+            visibleSectionNames.push(name);
+        });
+        console.log("VISIBLE SECTION NAMES:", JSON.stringify(visibleSectionNames));
+        
+        // Process each row sequentially with index to ensure none are missed
+        Array.from(allRows).forEach((row, index) => {
+            const rowNumber = index + 1;
+            console.log(`Processing row #${rowNumber} (Visual index: ${index})`);
+            
+            // Get section ID from multiple sources for reliability
+            const rowSectionId = row.getAttribute('data-section-id');
+            const nameInput = row.querySelector('.section-name');
+            
+            if (!nameInput) {
+                console.warn(`Row ${rowNumber} missing name input - creating default`);
+                const fallbackId = rowSectionId || `section_${rowNumber}`;
+                sectionData[fallbackId] = {
+                    name: `Section ${rowNumber}`,
+                    notes: '',
+                    references: '',
+                    status: 'not_started'
+                };
+                return;
+            }
+            
+            // Get reliable section ID
+            const sectionId = `section_${rowNumber}`;  // ALWAYS use row number for consistent section IDs
+            
+            // Get the section name, preserving what was entered (no fallback here)
+            const sectionName = nameInput.value.trim() || `Section ${rowNumber}`;
+            
+            // Get other fields, with empty defaults if missing
+            const notesElement = row.querySelector('.section-notes');
+            const referencesElement = row.querySelector('.section-references');
+            const statusElement = row.querySelector('.section-status');
+            
+            // Always collect the section data
+            sectionData[sectionId] = {
+                name: sectionName,
+                notes: notesElement ? notesElement.value.trim() : '',
+                references: referencesElement ? referencesElement.value.trim() : '',
+                status: statusElement ? statusElement.value : 'not_started'
+            };
+            
+            console.log(`Processed row #${rowNumber}: section_${rowNumber} = "${sectionName}"`);
+        });
+        
+        // Double-check for empty section data
+        if (Object.keys(sectionData).length === 0) {
+            console.warn("No sections found - adding default section");
+            sectionData['section_1'] = {
+                name: 'Default Section',
+                notes: '',
+                references: '',
+                status: 'not_started'
+            };
+        }
+        
+        // CRITICAL: Check visual vs. data consistency
+        console.log("VISUAL SECTIONS:", visibleSectionNames.length, visibleSectionNames);
+        console.log("DATA SECTIONS:", Object.keys(sectionData).length, Object.keys(sectionData));
+        
+        // Ensure section count matches
+        if (visibleSectionNames.length !== Object.keys(sectionData).length) {
+            console.error(`MISMATCH: Visual sections (${visibleSectionNames.length}) ≠ Data sections (${Object.keys(sectionData).length})`);
+        }
+        
+        // Update the form's hidden input with the collected data
+        sectionDataInput.value = JSON.stringify(sectionData);
+        console.log("FINAL DATA:", sectionDataInput.value);
+        
+        // Update row numbers
+        updateSectionNumbers();
+        
+        return sectionData;
+    }
+
+    // Override form submission to ensure all sections are captured
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        console.log("Form submission initiated");
+        
+        // Get all visible row content for debugging
+        const rows = document.querySelectorAll('#sectionTableBody tr.section-row');
+        console.log(`Found ${rows.length} visible section rows`);
+        
+        // Debug log all visible sections
+        const visibleSections = Array.from(rows).map((row, idx) => {
+            const nameInput = row.querySelector('.section-name');
+            return {
+                index: idx + 1,
+                name: nameInput ? nameInput.value : 'MISSING NAME',
+                id: `section_${idx + 1}`
+            };
+        });
+        console.log("VISIBLE SECTIONS:", JSON.stringify(visibleSections));
+
+        // Validate required fields
+        const title = document.getElementById('id_title').value.trim();
+        const project = document.getElementById('id_project')?.value || document.querySelector('input[name="project"][type="hidden"]')?.value;
+
+        if (!title) {
+            alert('Please enter a title for the research task.');
+            return;
+        }
+
+        if (!project) {
+            alert('Please select a project for the research task.');
+            return;
+        }
+
+        // Final collection of all section data before submission
+        const finalSectionData = updateSectionData();
+        
+        // Safety check - verify all visible rows made it into the data
+        if (Object.keys(finalSectionData).length !== rows.length) {
+            console.error(`CRITICAL ERROR: Section count mismatch! Visible: ${rows.length}, Data: ${Object.keys(finalSectionData).length}`);
+            
+            // Add any missing sections manually
+            let modified = false;
+            visibleSections.forEach(section => {
+                if (!finalSectionData[section.id]) {
+                    console.log(`Adding missing section: ${section.id} (${section.name})`);
+                    finalSectionData[section.id] = {
+                        name: section.name,
+                        notes: '',
+                        references: '',
+                        status: 'not_started'
+                    };
+                    modified = true;
+                }
+            });
+            
+            // If we made changes, update the form data
+            if (modified) {
+                sectionDataInput.value = JSON.stringify(finalSectionData);
+                console.log("UPDATED FORM DATA:", sectionDataInput.value);
+            }
+        }
+        
+        // Log submission details for debugging
+        console.log(`SUBMITTING FORM with ${Object.keys(finalSectionData).length} sections`);
+        console.log('Section data keys:', Object.keys(finalSectionData));
+        console.log('Section names:', Object.values(finalSectionData).map(s => s.name));
+
+        // Submit the form with all collected sections
+        form.submit();
+    });
+    
+    // Update section numbers initially
+    updateSectionNumbers();
+});
+</script>
+{% endblock %} 

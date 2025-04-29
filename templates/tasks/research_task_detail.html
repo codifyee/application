@@ -1,0 +1,421 @@
+{% extends 'base.html' %}
+{% load research_extras %}
+
+{% block title %}{{ research_task.title }} | Task Management System{% endblock %}
+
+{% block page_title %}Research Task Details{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    {% if research_task.project %}
+    <a href="{% url 'project_detail' research_task.project.id %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Back to Project
+    </a>
+    {% else %}
+    <a href="{% url 'research_list' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Back to Research Tasks
+    </a>
+    {% endif %}
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Research Details Card -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">Research Information</h6>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="taskActions" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="taskActions">
+                        <li>
+                            <a class="dropdown-item" href="{% url 'update_research_task' research_task.id %}">
+                                <i class="fas fa-edit me-2"></i>Edit Research
+                            </a>
+                        </li>
+                        <li>
+                            <button type="button" class="dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                <i class="fas fa-trash me-2"></i>Delete Research
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-8">
+                        <h4 class="mb-3">{{ research_task.title }}</h4>
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="badge {% if research_task.status == 'completed' %}bg-success{% elif research_task.status == 'in_progress' %}bg-primary{% elif research_task.status == 'blocked' %}bg-danger{% else %}bg-warning{% endif %} me-2">
+                                {{ research_task.get_status_display }}
+                            </span>
+                            <small class="text-muted">Created {{ research_task.created_at|date:"M d, Y" }}</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <div class="mb-2">
+                            <strong>Project:</strong>
+                            <a href="{% url 'project_detail' research_task.project.id %}" class="text-decoration-none">
+                                {{ research_task.project.name }}
+                            </a>
+                        </div>
+                        <div class="mb-2">
+                            <strong>Created By:</strong>
+                            {{ research_task.created_by.username }}
+                        </div>
+                        <div>
+                            <strong>Assigned To:</strong>
+                            {{ research_task.assigned_to.username|default:"Unassigned" }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <h5 class="mb-3">Description</h5>
+                    <div class="p-3 bg-light rounded">
+                        {{ research_task.description|linebreaks }}
+                    </div>
+                </div>
+
+                {% if research_task.reference_website %}
+                <div class="mb-4">
+                    <h5 class="mb-3">Reference Website</h5>
+                    <a href="{{ research_task.reference_website }}" target="_blank" class="btn btn-outline-primary">
+                        <i class="fas fa-external-link-alt me-2"></i>Visit Website
+                    </a>
+                </div>
+                {% endif %}
+
+                {% if research_task.issues %}
+                <div class="mb-4">
+                    <h5 class="mb-3">Issues</h5>
+                    <div class="alert alert-warning">
+                        {{ research_task.issues|linebreaks }}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if research_task.section_data %}
+                    {% with section_count=research_task.section_data.items|length %}
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0">Research Sections</h5>
+                            <a href="{% url 'update_research_task' research_task.id %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-edit me-1"></i>Edit Sections
+                            </a>
+                        </div>
+                        
+                        <!-- Debug info -->
+                        <div class="alert alert-info mb-3">
+                            <strong>Debug Info:</strong><br>
+                            Section Data Type: {{ research_task.section_data|stringformat:"s"|slice:":50" }}...<br>
+                            Number of Sections: {{ section_count }}<br>
+                            Section Keys: {% for key in research_task.section_data.keys %}{{ key }}{% if not forloop.last %}, {% endif %}{% endfor %}<br>
+                            
+                            <div class="mt-2 small">
+                                <strong>All Sections:</strong>
+                                <ol>
+                                {% for key, section in research_task.section_data.items %}
+                                    <li>{{ key }}: {{ section.name }} ({{ section.status }})</li>
+                                {% endfor %}
+                                </ol>
+                            </div>
+                        </div>
+                        
+                        {% if section_count > 0 %}
+                        <div class="accordion" id="sectionsAccordion">
+                            {% for section_id, section in research_task.section_data.items %}
+                            <div class="accordion-item mb-2">
+                                <h2 class="accordion-header" id="heading{{ section_id }}">
+                                    <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" type="button" 
+                                        data-bs-toggle="collapse" data-bs-target="#collapse{{ section_id }}" 
+                                        aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}" 
+                                        aria-controls="collapse{{ section_id }}">
+                                        <div class="d-flex align-items-center w-100">
+                                            <strong class="me-auto">{{ section.name }}</strong>
+                                            <span class="badge {% if section.status == 'completed' %}bg-success{% elif section.status == 'in_progress' %}bg-primary{% else %}bg-warning{% endif %} ms-2">
+                                                {{ section.status|title|default:"Not Started" }}
+                                            </span>
+                                        </div>
+                                    </button>
+                                </h2>
+                                <div id="collapse{{ section_id }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" 
+                                    aria-labelledby="heading{{ section_id }}" data-bs-parent="#sectionsAccordion">
+                                    <div class="accordion-body">
+                                        <div class="row">
+                                            <div class="col-md-12 mb-3">
+                                                <h6 class="fw-bold mb-2">Notes:</h6>
+                                                <div class="p-3 bg-light rounded">
+                                                    {{ section.notes|default:"No notes added"|linebreaks }}
+                                                </div>
+                                            </div>
+                                            {% if section.references %}
+                                            <div class="col-md-12">
+                                                <h6 class="fw-bold mb-2">References:</h6>
+                                                <div class="p-3 bg-light rounded">
+                                                    {{ section.references|linebreaks }}
+                                                </div>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                Section data exists but no items were found. This may indicate a formatting issue.
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Section data exists but appears to be empty. Please edit the research task to add sections.
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endwith %}
+                {% else %}
+                <div class="mb-4">
+                    <div class="alert alert-info d-flex align-items-center justify-content-between">
+                        <div>
+                            <i class="fas fa-info-circle me-2"></i>No research sections have been added yet.
+                            <p class="mb-0 mt-2 text-muted small">Add sections to organize your research findings and track progress.</p>
+                        </div>
+                        <a href="{% url 'update_research_task' research_task.id %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-plus me-1"></i>Add Section
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Research Findings Card -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Research Findings</h6>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="id_findings" class="form-label">Document your research findings, conclusions, and key takeaways below:</label>
+                        {{ findings_form.findings }}
+                        {% if findings_form.findings.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ findings_form.findings.errors.0 }}
+                        </div>
+                        {% endif %}
+                        <div class="form-text mt-2">
+                            <i class="fas fa-lightbulb text-warning me-1"></i>
+                            Tip: Use this space to summarize your research conclusions and important discoveries.
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Save Findings
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Research Progress Card -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Research Progress</h6>
+            </div>
+            <div class="card-body">
+                {% with total=research_task.section_data.values|length %}
+                {% with completed=research_task.section_data|count_completed_sections %}
+                {% if total > 0 %}
+                    {% widthratio completed total 100 as percentage %}
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Overall Progress</span>
+                            <span>{{ percentage }}%</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-success" role="progressbar" 
+                                style="width: {{ percentage }}%" 
+                                aria-valuenow="{{ percentage }}" 
+                                aria-valuemin="0" aria-valuemax="100">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="small">
+                        <div class="d-flex justify-content-between">
+                            <span>{{ completed }} of {{ total }} sections completed</span>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted">
+                        <p>No sections added yet</p>
+                    </div>
+                {% endif %}
+                {% endwith %}
+                {% endwith %}
+            </div>
+        </div>
+
+        <!-- Research Timeline Card -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Research Timeline</h6>
+            </div>
+            <div class="card-body">
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-marker bg-primary"></div>
+                        <div class="timeline-content">
+                            <h6 class="mb-1">Research Created</h6>
+                            <p class="text-muted mb-0">{{ research_task.created_at|date:"M d, Y H:i" }}</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-marker bg-info"></div>
+                        <div class="timeline-content">
+                            <h6 class="mb-1">Last Updated</h6>
+                            <p class="text-muted mb-0">{{ research_task.updated_at|date:"M d, Y H:i" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions Card -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'update_research_task' research_task.id %}" class="btn btn-primary">
+                        <i class="fas fa-edit me-2"></i>Edit Research
+                    </a>
+                    {% if research_task.status != 'completed' %}
+                    <form method="post" action="{% url 'pick_research_task' research_task.id %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="fas fa-check me-2"></i>Mark as Completed
+                        </button>
+                    </form>
+                    {% else %}
+                    <form method="post" action="{% url 'pick_research_task' research_task.id %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-warning w-100">
+                            <i class="fas fa-undo me-2"></i>Mark as Pending
+                        </button>
+                    </form>
+                    {% endif %}
+                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                        <i class="fas fa-trash me-2"></i>Delete Research
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete this research task? This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="post" action="{% url 'delete_research_task' research_task.id %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .timeline {
+        border-left: 3px solid #dee2e6;
+        padding-left: 20px;
+    }
+    
+    .timeline-item {
+        position: relative;
+        margin-bottom: 15px;
+    }
+    
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -26px;
+        top: 3px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #dee2e6;
+    }
+    
+    .table td {
+        vertical-align: middle;
+    }
+    
+    .section-header {
+        cursor: pointer;
+        padding: 10px;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        margin-bottom: 5px;
+    }
+    
+    .section-content {
+        padding: 15px;
+        border: 1px solid #dee2e6;
+        border-top: none;
+        margin-bottom: 10px;
+    }
+    
+    .progress {
+        height: 10px;
+    }
+
+    .card {
+        border: none;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15) !important;
+    }
+
+    .card-header {
+        background-color: #f8f9fc;
+        border-bottom: 1px solid #e3e6f0;
+    }
+
+    .alert {
+        border: none;
+        border-left: 4px solid;
+    }
+
+    .alert-info {
+        background-color: #e1f0ff;
+        border-left-color: #3498db;
+    }
+
+    .form-control:focus {
+        border-color: #4e73df;
+        box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+    }
+
+    .bg-light {
+        background-color: #f8f9fc !important;
+    }
+</style>
+{% endblock %} 

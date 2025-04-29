@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if task %}Edit{% else %}Create{% endif %} Research Task | Task Management System{% endblock %}
+
+{% block page_title %}{% if task %}Edit{% else %}Create{% endif %} Research Task{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{% url 'research_list' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Back to Research Tasks
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">{% if task %}Edit{% else %}Create{% endif %} Research Task</h6>
+            </div>
+            <div class="card-body">
+                <form method="post" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="id_topic" class="form-label">Topic <span class="text-danger">*</span></label>
+                        <input type="text" name="topic" id="id_topic" class="form-control {% if form.topic.errors %}is-invalid{% endif %}" 
+                            value="{{ form.topic.value|default:'' }}" required>
+                        {% if form.topic.errors %}
+                        <div class="invalid-feedback">
+                            {{ form.topic.errors.0 }}
+                        </div>
+                        {% endif %}
+                        <div class="form-text">Enter the main research topic or question.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_description" class="form-label">Description</label>
+                        <textarea name="description" id="id_description" rows="4" 
+                            class="form-control {% if form.description.errors %}is-invalid{% endif %}">{{ form.description.value|default:'' }}</textarea>
+                        {% if form.description.errors %}
+                        <div class="invalid-feedback">
+                            {{ form.description.errors.0 }}
+                        </div>
+                        {% endif %}
+                        <div class="form-text">Provide details about the research goals, methodologies, or specific questions to investigate.</div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="id_priority" class="form-label">Priority <span class="text-danger">*</span></label>
+                            <select name="priority" id="id_priority" class="form-select {% if form.priority.errors %}is-invalid{% endif %}" required>
+                                <option value="" {% if not form.priority.value %}selected{% endif %}>Select Priority</option>
+                                <option value="low" {% if form.priority.value == 'low' %}selected{% endif %}>Low</option>
+                                <option value="medium" {% if form.priority.value == 'medium' %}selected{% endif %}>Medium</option>
+                                <option value="high" {% if form.priority.value == 'high' %}selected{% endif %}>High</option>
+                            </select>
+                            {% if form.priority.errors %}
+                            <div class="invalid-feedback">
+                                {{ form.priority.errors.0 }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="id_project" class="form-label">Project</label>
+                            <select name="project" id="id_project" class="form-select {% if form.project.errors %}is-invalid{% endif %}">
+                                <option value="" {% if not form.project.value %}selected{% endif %}>No Project</option>
+                                {% for project in projects %}
+                                <option value="{{ project.id }}" {% if form.project.value|stringformat:'s' == project.id|stringformat:'s' %}selected{% endif %}>
+                                    {{ project.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            {% if form.project.errors %}
+                            <div class="invalid-feedback">
+                                {{ form.project.errors.0 }}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">Optional: Associate this task with a project.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_findings" class="form-label">Research Findings</label>
+                        <textarea name="findings" id="id_findings" rows="6" 
+                            class="form-control {% if form.findings.errors %}is-invalid{% endif %}">{{ form.findings.value|default:'' }}</textarea>
+                        {% if form.findings.errors %}
+                        <div class="invalid-feedback">
+                            {{ form.findings.errors.0 }}
+                        </div>
+                        {% endif %}
+                        <div class="form-text">Document your research findings, conclusions, or results. You can update this later.</div>
+                    </div>
+                    
+                    {% if task %}
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" name="is_completed" id="id_is_completed" class="form-check-input"
+                            {% if form.is_completed.value %}checked{% endif %}>
+                        <label for="id_is_completed" class="form-check-label">Mark as completed</label>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'research_list' %}" class="btn btn-secondary me-md-2">Cancel</a>
+                        <button type="submit" class="btn btn-primary">
+                            {% if task %}Save Changes{% else %}Create Task{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Research Task Guidelines</h6>
+            </div>
+            <div class="card-body">
+                <h5 class="fw-bold mb-3">Tips for Effective Research Tasks</h5>
+                <ul class="mb-4">
+                    <li>Be specific about what you want to research</li>
+                    <li>Break down complex research into smaller, manageable tasks</li>
+                    <li>Set clear objectives for the research</li>
+                    <li>Consider the priority level based on urgency and importance</li>
+                    <li>Document findings as you progress</li>
+                </ul>
+                
+                <h5 class="fw-bold mb-3">Priority Levels</h5>
+                <div class="mb-2">
+                    <span class="badge bg-danger me-2">High</span>
+                    Urgent research that impacts critical decisions or deadlines
+                </div>
+                <div class="mb-2">
+                    <span class="badge bg-primary me-2">Medium</span>
+                    Important research that should be completed soon
+                </div>
+                <div class="mb-2">
+                    <span class="badge bg-secondary me-2">Low</span>
+                    Research that can be addressed when time permits
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Form validation script
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('.needs-validation');
+        
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            
+            form.classList.add('was-validated');
+        }, false);
+    });
+</script>
+{% endblock %} 

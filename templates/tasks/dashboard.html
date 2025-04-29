@@ -1,0 +1,238 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Task Management System{% endblock %}
+
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-0 shadow h-100 py-2 card-status card-status-todo">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            To Do
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ todo_count }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-0 shadow h-100 py-2 card-status card-status-progress">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            In Progress
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ in_progress_count }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-spinner fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-0 shadow h-100 py-2 card-status card-status-done">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Completed
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ done_count }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-0 shadow h-100 py-2 card-status card-status-blocked">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                            Blocked
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ blocked_count }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Your Tasks</h6>
+                <div class="dropdown no-arrow">
+                    <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
+                        data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
+                        aria-labelledby="dropdownMenuLink">
+                        <div class="dropdown-header">Actions:</div>
+                        <a class="dropdown-item" href="{% url 'task_list' %}">View All Tasks</a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if user_tasks %}
+                <div class="list-group">
+                    {% for task in user_tasks|slice:":5" %}
+                    <a href="{% url 'task_detail' task.id %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">{{ task.title }}</h5>
+                            <small>
+                                {% if task.status == 'todo' %}
+                                <span class="badge bg-primary">To Do</span>
+                                {% elif task.status == 'in_progress' %}
+                                <span class="badge bg-warning text-dark">In Progress</span>
+                                {% elif task.status == 'done' %}
+                                <span class="badge bg-success">Done</span>
+                                {% else %}
+                                <span class="badge bg-danger">Blocked</span>
+                                {% endif %}
+                            </small>
+                        </div>
+                        <p class="mb-1">{{ task.description|truncatechars:50 }}</p>
+                        <small>Created: {{ task.created_at|date:"M d, Y" }}</small>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-center">You have no tasks assigned.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Available Tasks</h6>
+                <div class="dropdown no-arrow">
+                    <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink2"
+                        data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
+                        aria-labelledby="dropdownMenuLink2">
+                        <div class="dropdown-header">Actions:</div>
+                        <a class="dropdown-item" href="{% url 'task_list' %}">View All Tasks</a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if available_tasks %}
+                <div class="list-group">
+                    {% for task in available_tasks|slice:":5" %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">{{ task.title }}</h5>
+                            <small>
+                                <a href="{% url 'pick_task' task.id %}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-hand-pointer"></i> Pick
+                                </a>
+                            </small>
+                        </div>
+                        <p class="mb-1">{{ task.description|truncatechars:50 }}</p>
+                        <small>Created: {{ task.created_at|date:"M d, Y" }}</small>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-center">No available tasks.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Projects Section -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Recent Projects</h6>
+                <div class="dropdown no-arrow">
+                    <a class="dropdown-toggle" href="#" role="button" id="projectsDropdown"
+                        data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
+                        aria-labelledby="projectsDropdown">
+                        <div class="dropdown-header">Actions:</div>
+                        <a class="dropdown-item" href="{% url 'project_list' %}">View All Projects</a>
+                        <a class="dropdown-item" href="{% url 'create_project' %}">Create New Project</a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if projects %}
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Project Name</th>
+                                <th>Description</th>
+                                <th>Created By</th>
+                                <th>Created At</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for project in projects %}
+                            <tr>
+                                <td><a href="{% url 'project_detail' project.id %}">{{ project.name }}</a></td>
+                                <td>{{ project.description|truncatechars:50 }}</td>
+                                <td>{{ project.created_by.username }}</td>
+                                <td>{{ project.created_at|date:"M d, Y" }}</td>
+                                <td class="text-center">
+                                    <a href="{% url 'project_detail' project.id %}" class="btn btn-sm btn-info">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'create_project_research_task' project.id %}" class="btn btn-sm btn-success">
+                                        <i class="fas fa-plus"></i> Add Research
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="text-center mt-3">
+                    <a href="{% url 'project_list' %}" class="btn btn-primary">View All Projects</a>
+                    <a href="{% url 'create_project' %}" class="btn btn-success">Create New Project</a>
+                </div>
+                {% else %}
+                <p class="text-center">No projects created yet.</p>
+                <div class="text-center mt-3">
+                    <a href="{% url 'create_project' %}" class="btn btn-success">Create Your First Project</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

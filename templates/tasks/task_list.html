@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block title %}Tasks - Task Management System{% endblock %}
+
+{% block page_title %}All Tasks{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'create_task' %}" class="btn btn-sm btn-primary">
+    <i class="fas fa-plus"></i> New Task
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    Tasks
+                </h6>
+                <div class="dropdown no-arrow">
+                    <a class="dropdown-toggle" href="#" role="button" id="filterDropdown"
+                        data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fas fa-filter fa-sm fa-fw text-gray-400"></i> Filter
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
+                        aria-labelledby="filterDropdown">
+                        <div class="dropdown-header">Filter by Status:</div>
+                        <a class="dropdown-item" href="?status=todo">To Do</a>
+                        <a class="dropdown-item" href="?status=in_progress">In Progress</a>
+                        <a class="dropdown-item" href="?status=done">Completed</a>
+                        <a class="dropdown-item" href="?status=blocked">Blocked</a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="{% url 'task_list' %}">All Tasks</a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Status</th>
+                                <th>Created By</th>
+                                <th>Assigned To</th>
+                                <th>Created At</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for task in tasks %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'task_detail' task.id %}">{{ task.title }}</a>
+                                </td>
+                                <td>
+                                    {% if task.status == 'todo' %}
+                                    <span class="badge bg-primary">To Do</span>
+                                    {% elif task.status == 'in_progress' %}
+                                    <span class="badge bg-warning text-dark">In Progress</span>
+                                    {% elif task.status == 'done' %}
+                                    <span class="badge bg-success">Done</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">Blocked</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ task.created_by.username }}</td>
+                                <td>
+                                    {% if task.assigned_to %}
+                                    {{ task.assigned_to.username }}
+                                    {% else %}
+                                    <a href="{% url 'pick_task' task.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-hand-pointer"></i> Pick
+                                    </a>
+                                    {% endif %}
+                                </td>
+                                <td>{{ task.created_at|date:"M d, Y" }}</td>
+                                <td class="text-center">
+                                    <a href="{% url 'task_detail' task.id %}" class="btn btn-sm btn-info">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'update_task' task.id %}" class="btn btn-sm btn-warning">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center">No tasks found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
