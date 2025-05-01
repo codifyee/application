@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Redirect Test</title>
+</head>
+<body>
+    <h1>This is a test page</h1>
+    <p>If you can see this, the server is working correctly with HTTP.</p>
+    <p>Current URL: <span id="currentUrl"></span></p>
+    <p>Protocol used: <span id="protocol"></span></p>
+    
+    <script>
+        document.getElementById('currentUrl').textContent = window.location.href;
+        document.getElementById('protocol').textContent = window.location.protocol;
+    </script>
+</body>
+</html> 

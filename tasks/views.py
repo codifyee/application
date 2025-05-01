@@ -1,10 +1,10 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.urls import reverse
 from django.contrib.auth.models import User
-from .models import Task, TaskHistory, Project, ResearchTask, WebsiteSection
+from .models import Task, TaskHistory, Project, ResearchTask, WebsiteSection, Comment
 from .forms import TaskForm, TaskStatusForm, CommentForm, ProjectForm, ResearchTaskForm, ResearchFindingsForm, WebsiteSectionForm
 import json
 
@@ -627,3 +627,8 @@ def delete_research_task(request, research_id):
         return redirect('project_detail', project_id=project_id)
     
     return redirect('research_list')
+
+# Debug view - no login required, explicitly returns HTTP response
+def http_debug(request):
+    protocol = request.is_secure() and "HTTPS" or "HTTP"
+    return HttpResponse(f"Protocol: {protocol}<br>You have successfully reached the server via HTTP.<br>If you're seeing this, your browser is not forcing HTTPS.")
