@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: django-app
+    env: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn taskmanager.wsgi:application"
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: taskmanager.settings
